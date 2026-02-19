@@ -5,9 +5,7 @@ Interactive web interface for the complete pipeline
 
 import streamlit as st
 import numpy as np
-import cv2
 from PIL import Image
-import torch
 import time
 import json
 import io
@@ -15,6 +13,20 @@ import base64
 from pathlib import Path
 import tempfile
 import os
+
+# Handle OpenCV import for cloud deployment
+try:
+    import cv2
+except ImportError:
+    st.error("OpenCV not available. Please install opencv-python-headless")
+    cv2 = None
+
+# Handle PyTorch import
+try:
+    import torch
+except ImportError:
+    torch = None
+    st.warning("PyTorch not available. Some features may be limited.")
 
 # Set page config first
 st.set_page_config(
@@ -73,20 +85,25 @@ st.markdown("""
 @st.cache_resource
 def load_pipeline(use_llava: bool = False):
     """Load and cache the detection pipeline"""
-    from config import get_default_config, update_config_for_cpu
-    from pipeline import ExplainableDetectionPipeline
-    
-    config = get_default_config()
-    
-    # Check for GPU
-    if not torch.cuda.is_available():
-        config = update_config_for_cpu(config)
-        st.sidebar.warning("⚠️ Running on CPU (slower)")
-    else:
-        st.sidebar.success(f"✅ GPU: {torch.cuda.get_device_name(0)}")
-    
-    pipeline = ExplainableDetectionPipeline(config, use_llava=use_llava)
-    return pipeline
+    try:
+        from config import get_default_config, update_config_for_cpu
+        from pipeline import ExplainableDetectionPipeline
+        
+        config = get_default_config()
+        
+        # Check for GPU
+        if torch is None or not torch.cuda.is_available():
+            config = update_config_for_cpu(config)
+            st.sidebar.warning("⚠️ Running on CPU (slower)")
+        else:
+            st.sidebar.success(f"✅ GPU: {torch.cuda.get_device_name(0)}")
+        
+        pipeline = ExplainableDetectionPipeline(config, use_llava=use_llava)
+        return pipeline
+    except Exception as e:
+        st.error(f"Error loading pipeline: {e}")
+        st.info("Try refreshing the page or check the logs for details.")
+        return None
 
 
 def image_to_base64(image: np.ndarray) -> str:
@@ -255,14 +272,18 @@ def main():
         )
     
     # Load pipeline with caching
-    with st.spinner("Loading models..."):
+    with st.spinner("Loading models... This may take a few minutes on first run."):
         try:
             pipeline = load_pipeline(use_llava=use_llava)
+            if pipeline is None:
+                st.error("❌ Failed to load models. Please check the logs.")
+                st.stop()
             # Update config based on sidebar settings
             pipeline.config.yolo.model_size = yolo_model
             pipeline.config.yolo.confidence_threshold = conf_threshold
         except Exception as e:
             st.error(f"Error loading models: {e}")
+            st.info("💡 Tip: On Streamlit Cloud, large models may fail due to memory limits.")
             st.stop()
     
     # Main content area

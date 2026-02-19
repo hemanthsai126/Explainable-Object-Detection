@@ -1,57 +1,47 @@
 # Explainable Object Detection Framework
-# Core dependencies
+# Optimized for Streamlit Cloud Deployment
 
-# Deep Learning
-torch>=2.0.0
-torchvision>=0.15.0
+# MUST BE FIRST - Required for pkg_resources (Python 3.12+)
+setuptools>=69.0.0
+wheel
+packaging
 
 # Web Application
 streamlit>=1.28.0
 plotly>=5.18.0
 
+# Deep Learning (CPU versions for cloud)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+
 # Object Detection
-ultralytics>=8.0.0  # YOLOv8
+ultralytics>=8.0.0
 
 # CLIP for semantic grounding
-openai-clip>=1.0.0
+git+https://github.com/openai/CLIP.git
 ftfy>=6.1.0
+regex
 
-# LLaVA dependencies
+# LLaVA dependencies (lighter version)
 transformers>=4.36.0
 accelerate>=0.25.0
-bitsandbytes>=0.41.0
 
 # Image processing
-opencv-python>=4.8.0
+opencv-python-headless>=4.8.0
 Pillow>=10.0.0
 scikit-image>=0.21.0
 
 # Data handling
 numpy>=1.24.0
 pandas>=2.0.0
-pycocotools>=2.0.6
 
 # Visualization
 matplotlib>=3.7.0
 seaborn>=0.12.0
 
-# Grad-CAM
-grad-cam>=1.4.8
-
 # Progress bars and utilities
 tqdm>=4.65.0
-rich>=13.0.0
-
-# Evaluation metrics
-nltk>=3.8.0
-rouge-score>=0.1.2
-bert-score>=0.3.13
 
 # Configuration
 pyyaml>=6.0
-python-dotenv>=1.0.0
-
-# Jupyter support (optional)
-jupyter>=1.0.0
-ipywidgets>=8.0.0
-
